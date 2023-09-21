@@ -1,6 +1,13 @@
+/* eslint-disable react/prop-types */
+import { useState } from "react";
+import { useContext } from "react";
+import { createContext } from "react";
+import { createPortal } from "react-dom";
+import { HiEllipsisVertical } from "react-icons/hi2";
 import styled from "styled-components";
+import { useClickOutSideModal } from "../hooks/useClickOutSideModal";
 
-const StyledMenu = styled.div`
+const Menu = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -60,3 +67,82 @@ const StyledButton = styled.button`
     transition: all 0.3s;
   }
 `;
+const MenuContext = createContext();
+export const Menus = ({ children }) => {
+  const [openId, setIsOpenId] = useState("");
+  const [position, setPosition] = useState();
+  const open = setIsOpenId;
+  const close = () => setIsOpenId("");
+  const setPositionMenu = setPosition;
+  const unSetPositionMenu = () => setPositionMenu();
+  return (
+    <MenuContext.Provider
+      value={{
+        openId,
+        open,
+        close,
+        setPositionMenu,
+        unSetPositionMenu,
+        position,
+      }}
+    >
+      {children}
+    </MenuContext.Provider>
+  );
+};
+
+const Button = ({ children, icon, onClick }) => {
+  const { close } = useContext(MenuContext);
+  const handleOnClick = () => {
+    console.log("CLICKED");
+    onClick?.();
+    close();
+  };
+  return (
+    <li>
+      <StyledButton onClick={handleOnClick}>
+        {icon}
+        <span>{children}</span>
+      </StyledButton>
+    </li>
+  );
+};
+const List = ({ children, id }) => {
+  const { openId, position, close } = useContext(MenuContext);
+  const { containerRef } = useClickOutSideModal(close, true);
+  if (openId !== id) return null;
+  return createPortal(
+    <StyledList
+      ref={containerRef}
+      position={{ ...position }}
+    >
+      {children}
+    </StyledList>,
+    document.body
+  );
+};
+const Toggle = ({ id }) => {
+  const { open, close, openId, setPositionMenu, unSetPositionMenu } =
+    useContext(MenuContext);
+  const handleClick = (e) => {
+    const rect = e.target.closest("button").getBoundingClientRect();
+    const isOpen = openId === "" || openId !== id;
+    isOpen ? open(id) : close();
+    isOpen
+      ? setPositionMenu({
+          x: window.innerWidth - rect.width - rect.x,
+          y: rect.y + rect.height + 8,
+        })
+      : unSetPositionMenu();
+  };
+  return (
+    <StyledToggle onClick={handleClick}>
+      <HiEllipsisVertical></HiEllipsisVertical>
+    </StyledToggle>
+  );
+};
+
+Menus.list = List;
+Menus.button = Button;
+Menus.toggle = Toggle;
+Menus.menu = Menu;

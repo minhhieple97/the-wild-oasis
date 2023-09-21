@@ -1,66 +1,54 @@
-/* eslint-disable react/prop-types */
-import { Controller, useForm } from "react-hook-form";
 import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
 import Button from "../../ui/Button";
 import FileInput from "../../ui/FileInput";
 import { Textarea } from "../../ui/Textarea";
-import { useUpdateCabin } from "./useUpdateCabin";
-import { useCreateCabin } from "./useCreateCabin";
+import { Controller, useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { upsertCabin } from "../../services/apiCabins";
+import { toast } from "react-hot-toast";
 
-function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
-  const { id: editId, ...editValues } = cabinToEdit;
-  const isEditSession = Boolean(editId);
+function CreateCabinForm() {
   const { register, handleSubmit, reset, getValues, formState, control } =
-    useForm({
-      defaultValues: isEditSession ? editValues : {},
-    });
+    useForm();
   const { errors } = formState;
-  const { isCreating, createCabin } = useCreateCabin();
-  const { isUpdating, updateCabin } = useUpdateCabin();
-  const isWorking = isUpdating || isCreating;
-  const onSubmit = (data) => {
-    if (!editId)
-      return createCabin(data, {
-        onSuccess: () => {
-          onCloseModal?.();
-          reset();
-        },
+  const queryClient = useQueryClient();
+  const { isLoading: isCreating, mutate } = useMutation({
+    mutationFn: upsertCabin,
+    onSuccess: () => {
+      toast.success("Cabin created successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["cabins"],
       });
-    updateCabin(
-      { newCabinData: data, id: editId },
-      {
-        onSuccess: () => {
-          onCloseModal?.();
-          reset();
-        },
-      }
-    );
+      reset();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const onSubmit = (data) => {
+    console.log({ data });
+    mutate(data);
   };
   return (
-    <Form
-      type={`${onCloseModal ? `modal` : `regular`}`}
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <Form type="modal" onSubmit={handleSubmit(onSubmit)}>
       <FormRow label="Cabin name" error={errors?.name?.message}>
         <Input
-          disabled={isWorking}
+          disabled={isCreating}
           type="text"
           id="name"
           {...register("name", {
-            required: isEditSession ? false : "Name is require",
+            required: "Name is require",
           })}
         />
       </FormRow>
 
       <FormRow label="Maximum capacity" error={errors?.maxCapacity?.message}>
         <Input
-          disabled={isWorking}
+          disabled={isCreating}
           type="number"
           id="maxCapacity"
           {...register("maxCapacity", {
-            required: isEditSession ? false : "Max capacity is require",
+            required: "Max capacity is require",
             min: 1,
           })}
         />
@@ -68,11 +56,11 @@ function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
 
       <FormRow label="Regular price" error={errors?.regularPrice?.message}>
         <Input
-          disabled={isWorking}
+          disabled={isCreating}
           type="number"
           id="regularPrice"
           {...register("regularPrice", {
-            required: isEditSession ? false : "Regular price is require",
+            required: "Regular price is require",
             min: 1,
           })}
         />
@@ -80,12 +68,12 @@ function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
 
       <FormRow label="Discount" error={errors?.discount?.message}>
         <Input
-          disabled={isWorking}
+          disabled={isCreating}
           type="number"
           id="discount"
           defaultValue={0}
           {...register("discount", {
-            required: isEditSession ? false : "Discount is require",
+            required: "Discount is require",
             validate: (value) =>
               value <= getValues().regularPrice ||
               "Discount should be less than regular price",
@@ -98,11 +86,11 @@ function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
         error={errors?.description?.message}
       >
         <Textarea
-          type="text"
+          type="number"
           id="description"
           defaultValue=""
           {...register("description", {
-            required: isEditSession ? false : "Description is required",
+            required: "Description is required",
           })}
         />
       </FormRow>
@@ -110,7 +98,7 @@ function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
       <Controller
         name="image"
         control={control}
-        rules={{ required: !isEditSession }}
+        rules={{ required: true }}
         render={({ field }) => (
           <>
             <FormRow label="Cabin photo">
@@ -125,16 +113,10 @@ function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
       />
 
       <FormRow>
-        <Button
-          variation="secondary"
-          type="reset"
-          onClick={() => onCloseModal?.()}
-        >
+        <Button variation="secondary" type="reset">
           Cancel
         </Button>
-        <Button disabled={isWorking}>
-          {isEditSession ? "Update cabin" : "Add new cabin"}
-        </Button>
+        <Button disabled={isCreating}>Addd new cabin</Button>
       </FormRow>
     </Form>
   );

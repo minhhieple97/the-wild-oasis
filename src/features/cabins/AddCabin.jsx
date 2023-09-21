@@ -1,18 +1,18 @@
-import Button from 'ui/Button';
-import Modal from 'ui/Modal';
-import CreateCabinForm from './CreateCabinForm';
+import CreateCabinForm from "./CreateCabinForm";
+import Button from "../../ui/Button";
+import { Modal } from "../../ui/Modal";
 
-function AddCabin() {
+export const AddCabin = () => {
   return (
-    <Modal>
-      <Modal.Toggle opens='new-cabin'>
-        <Button>Add new cabin</Button>
-      </Modal.Toggle>
-      <Modal.Window name='new-cabin'>
-        <CreateCabinForm />
-      </Modal.Window>
-    </Modal>
+    <div>
+      <Modal>
+        <Modal.open opens="cabin-form">
+          <Button>Add new cabin</Button>
+        </Modal.open>
+        <Modal.window name="cabin-form">
+          <CreateCabinForm></CreateCabinForm>
+        </Modal.window>
+      </Modal>
+    </div>
   );
-}
-
-export default AddCabin;
+};

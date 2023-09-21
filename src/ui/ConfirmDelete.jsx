@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import styled from "styled-components";
 import Button from "./Button";
 import Heading from "./Heading";
@@ -20,9 +21,7 @@ const StyledConfirmDelete = styled.div`
   }
 `;
 
-function ConfirmDelete({ resource, onConfirm, disabled, closeModal }) {
-  function handleConfirmClick() {}
-
+function ConfirmDelete({ resource, onConfirm, disabled, onCloseModal }) {
   return (
     <StyledConfirmDelete>
       <Heading type="h3">Delete {resource}</Heading>
@@ -32,12 +31,12 @@ function ConfirmDelete({ resource, onConfirm, disabled, closeModal }) {
       </p>
 
       <div>
-        <Button variation="secondary" onClick={closeModal}>
+        <Button variation="secondary" onClick={onCloseModal}>
           Cancel
         </Button>
         <Button
           variation="danger"
-          onClick={handleConfirmClick}
+          onClick={() => onConfirm()}
           disabled={disabled}
         >
           Delete
